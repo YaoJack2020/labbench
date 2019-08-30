@@ -846,19 +846,21 @@ class DeviceMetaclass(type):
         except AttributeError:
             annotations = {}
 
-        for name, trait in annotations.items():
-            if not isinstance(trait, TraitMixIn)\
-               and not hasattr(cls.settings, name)\
-               and not hasattr(cls.state, name):
-                msg = f'no match for annotation named "{name}" in state or settings, so it must be a trait type definition'
-                raise TypeError(msg)
-
-            # Make the annotation a state attribute if it is defined with any keywords that trigger live interaction
-            if trait.setter or trait.getter or trait.command:
-                setattr(cls.state, name, trait)
-            # Otherwise, it is just a setting
+        # Add any annotations in cls.state and cls.settings
+        for name, v in annotations.items():
+            if isinstance(v, TraitMixIn):
+                # Make the annotation a state attribute if it is defined with any keywords that trigger live interaction
+                if v.setter or v.getter or v.command:
+                    setattr(cls.state, name, v)
+                # Otherwise, it is a setting
+                else:
+                    setattr(cls.setter, name, v)
             else:
-                setattr(cls.setter, name, trait)
+                if not hasattr(cls.settings, name):
+                    msg = f'no match for annotation named "{name}" in state or settings, so it must be a trait type definition'
+                    raise TypeError(msg)
+                else:
+                    cls.settings.define(name=v)
 
         traits = cls.settings.class_traits()
 
