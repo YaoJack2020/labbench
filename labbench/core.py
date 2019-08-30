@@ -694,39 +694,6 @@ class Dict(TraitMixIn, traitlets.Dict):
     '''
 
 
-# class BoolTraitlet(traitlets.CBool):
-    # def __init__(self, trues=[True], falses=[False], **kws):
-    #     self._trues = [v.upper() if isinstance(v, str) else v for v in trues]
-    #     self._falses = [v.upper() if isinstance(v, str) else v for v in falses]
-    #     super(BoolTraitlet, self).__init__(**kws)
-    #
-    # def validate(self, obj, value):
-    #     if isinstance(value, str):
-    #         value = value.upper()
-    #     if value in self._trues:
-    #         return True
-    #     elif value in self._falses:
-    #         return False
-    #     elif not isinstance(value, numbers.Number):
-    #         raise ValueError(
-    #             'Need a boolean or numeric value to convert to integer, but given {} instead' \
-    #                 .format(repr(value)))
-    #     try:
-    #         return bool(value)
-    #     except:
-    #         self.error(obj, value)
-    #
-    # # Convert any castable value
-    # # to the first entry in self._trues or self._falses
-    # def devalidate(self, obj, value):
-    #     if self.validate(obj, value):
-    #         return self._trues[0]
-    #     else:
-    #         return self._falses[0]
-    #
-    # default_value = False
-
-
 class Bool(TraitMixIn, traitlets.CBool):
     ''' Trait for a python boolean, with type checking.
 
@@ -872,6 +839,26 @@ class DeviceMetaclass(type):
         # parent class state or settings, if they are not defined as subclasses
         autosubclass('state', HasStateTraits)
         autosubclass('settings', HasSettingsTraits)
+
+        # Pull type annotations into state and settings as appropriate
+        try:
+            annotations = cls.__annotations__
+        except AttributeError:
+            annotations = {}
+
+        for name, trait in annotations.items():
+            if not isinstance(trait, TraitMixIn)\
+               and not hasattr(cls.settings, name)\
+               and not hasattr(cls.state, name):
+                msg = f'no match for annotation named "{name}" in state or settings, so it must be a trait type definition'
+                raise TypeError(msg)
+
+            # Make the annotation a state attribute if it is defined with any keywords that trigger live interaction
+            if trait.setter or trait.getter or trait.command:
+                setattr(cls.state, name, trait)
+            # Otherwise, it is just a setting
+            else:
+                setattr(cls.setter, name, trait)
 
         traits = cls.settings.class_traits()
 
