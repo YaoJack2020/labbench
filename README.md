@@ -6,8 +6,8 @@ procedure. Objects for control over equipment (or other software) should only ex
 a clear set of automation capabilities to make laboratory automation more robust and less frustrating.
 
 The labbench module provides tools that support toward this goal through an object protocol and
-support functions. These separate repetitive and error-prone boilerplate code,
-Use of these capabilities among multiple experimental runs also helps to produced data sets with
+support functions. These separate repetitive and error-prone boilerplate code.
+Use of these capabilities among multiple experimental runs also helps to produce data sets with
 consistent structure.
 
 ### Devices
